@@ -167,11 +167,10 @@
     if (!tokenHash) {
       fail();
     } else {
-      fetch(SUPABASE_URL + "/auth/v1/verify?token_hash=" + encodeURIComponent(tokenHash)
-            + "&type=" + encodeURIComponent(recoveryType), {
+      fetch(SUPABASE_URL + "/auth/v1/verify", {
         method: "POST",
         headers: { "apikey": SUPABASE_ANON_KEY, "Content-Type": "application/json" },
-        body: "{}",
+        body: JSON.stringify({ token_hash: tokenHash, type: recoveryType }),
       })
         .then(function (res) {
           return res.json().then(function (data) {
