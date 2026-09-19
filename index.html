@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>重置密码 · 心意管家</title>
+  <style>
+    /* 色板照抄 rnapp/src/theme/tokens.ts「雾绿邮局」；零外链、零依赖 */
+    :root {
+      --paper: #F3F5EF; --surface: #FCFCF8; --ink: #2E3B35; --ink-soft: #6B7871;
+      --line: #DDE3D8; --moss: #4E7D6B; --moss-deep: #3A5F51; --cinnabar: #C2544A;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      background: var(--paper); color: var(--ink);
+      font-family: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      width: 100%; max-width: 380px; background: var(--surface);
+      border: 1px solid var(--line); border-radius: 14px; padding: 30px 24px 26px;
+    }
+    .brand {
+      font-family: "Kaiti SC", "STKaiti", KaiTi, "Songti SC", serif;
+      font-size: 26px; text-align: center; letter-spacing: 2px;
+    }
+    .sub { margin-top: 8px; font-size: 13px; line-height: 1.8; color: var(--ink-soft); text-align: center; }
+    .state { margin-top: 26px; }
+    .row { position: relative; margin-bottom: 14px; }
+    input {
+      width: 100%; border: 1px solid var(--line); border-radius: 12px;
+      background: var(--surface); padding: 13px 44px 13px 14px;
+      font-size: 15px; color: var(--ink); font-family: inherit;
+    }
+    input::placeholder { color: #A7B0A8; }
+    .eye {
+      position: absolute; right: 12px; top: 0; bottom: 0; display: flex; align-items: center;
+      border: 0; background: none; cursor: pointer; padding: 0;
+    }
+    .eye svg { stroke: var(--ink-soft); }
+    button.primary {
+      width: 100%; border: 0; border-radius: 14px; background: var(--moss);
+      color: #fff; font-size: 15px; font-weight: 600; font-family: inherit;
+      padding: 15px 20px; cursor: pointer;
+    }
+    button.primary:active { background: var(--moss-deep); }
+    button.primary:disabled { opacity: .6; cursor: default; }
+    .error {
+      color: var(--cinnabar); font-size: 13px; line-height: 1.8;
+      background: #F6E3E0; border-radius: 10px; padding: 12px 14px; text-align: center;
+    }
+    .success-icon { text-align: center; margin-bottom: 14px; }
+    .success-icon svg { stroke: var(--moss); }
+    .spin {
+      width: 22px; height: 22px; border: 2.5px solid var(--line);
+      border-top-color: var(--moss); border-radius: 50%;
+      animation: spin .8s linear infinite; margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .center { text-align: center; }
+    .muted { color: var(--ink-soft); font-size: 12.5px; line-height: 1.9; margin-top: 18px; text-align: center; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1 class="brand">心意管家</h1>
+
+    <!-- 校验中 -->
+    <section class="state" id="state-checking">
+      <div class="spin" aria-hidden="true"></div>
+      <p class="sub">正在验证重置链接…</p>
+    </section>
+
+    <!-- 设置新密码 -->
+    <section class="state" id="state-form" hidden>
+      <p class="sub">为你的账号设置新密码</p>
+      <form id="reset-form" autocomplete="off" style="margin-top:22px">
+        <div class="row">
+          <input id="password" type="password" placeholder="新密码（至少 6 位）"
+                 autocomplete="new-password" minlength="6" required />
+          <button type="button" class="eye" data-target="password" aria-label="显示密码">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+        <div class="row">
+          <input id="confirm" type="password" placeholder="再输入一次新密码"
+                 autocomplete="new-password" minlength="6" required />
+          <button type="button" class="eye" data-target="confirm" aria-label="显示密码">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+        <p class="error" id="form-error" hidden></p>
+        <button class="primary" id="submit-btn" type="submit" style="margin-top:6px">设置新密码</button>
+      </form>
+    </section>
+
+    <!-- 成功 -->
+    <section class="state" id="state-done" hidden>
+      <div class="success-icon">
+        <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 6 9 17l-5-5"/>
+        </svg>
+      </div>
+      <p class="sub">新密码已设置成功。<br/>请回到心意管家 App，用新密码登录。</p>
+    </section>
+
+    <!-- 链接无效/过期 -->
+    <section class="state" id="state-error" hidden>
+      <p class="error" id="error-text">链接无效或已过期，请回到心意管家 App 重新发起「忘记密码」。</p>
+      <p class="muted">重置链接在邮件发出后一段时间内有效，且只能使用一次。</p>
+    </section>
+
+    <p class="muted" id="footnote">联系人、日子与历史只保存在你的设备上。</p>
+  </main>
+
+  <script>
+    // 部署时由脚本注入；anon key 是可公开的前端密钥（与 App EXPO_PUBLIC_SUPABASE_ANON_KEY 同值）
+    var SUPABASE_URL = "https://qgvjfybxtcxqxtshuhjf.supabase.co";
+    var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFndmpmeWJ4dGN4cXh0c2h1aGpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3Mzc5NTQsImV4cCI6MjEwNTMxMzk1NH0.G1xRqPHIPSvQU-Yo9eTydE9WhJ_Av-BLYJJQxp_sNyE";
+
+    var states = {
+      checking: document.getElementById("state-checking"),
+      form: document.getElementById("state-form"),
+      done: document.getElementById("state-done"),
+      error: document.getElementById("state-error"),
+    };
+    function show(name) {
+      Object.keys(states).forEach(function (k) { states[k].hidden = k !== name; });
+    }
+    function fail(msg) {
+      if (msg) document.getElementById("error-text").textContent = msg;
+      show("error");
+    }
+
+    // 眼睛切换
+    document.querySelectorAll(".eye").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var input = document.getElementById(btn.dataset.target);
+        var show = input.type === "password";
+        input.type = show ? "text" : "password";
+        btn.setAttribute("aria-label", show ? "隐藏密码" : "显示密码");
+      });
+    });
+
+    function networkErrorMsg(e) {
+      return "网络不给力，请检查网络后重新打开此链接。";
+    }
+
+    // 1) 从邮件链接的 hash 取一次性 token_hash，换会话
+    var params = new URLSearchParams(location.hash.slice(1));
+    var tokenHash = params.get("token_hash");
+    var recoveryType = params.get("type") || "recovery";
+    var accessToken = null;
+
+    if (!tokenHash) {
+      fail();
+    } else {
+      fetch(SUPABASE_URL + "/auth/v1/verify?token_hash=" + encodeURIComponent(tokenHash)
+            + "&type=" + encodeURIComponent(recoveryType), {
+        method: "POST",
+        headers: { "apikey": SUPABASE_ANON_KEY, "Content-Type": "application/json" },
+        body: "{}",
+      })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            if (!res.ok || !data.access_token) {
+              var code = (data && (data.code || data.error_code || data.msg || data.message) || "").toString();
+              if (/expired|otp_expired/i.test(code)) {
+                fail("链接已过期，请回到心意管家 App 重新发起「忘记密码」。");
+              } else {
+                fail();
+              }
+              return;
+            }
+            accessToken = data.access_token;
+            show("form");
+          });
+        })
+        .catch(function () { fail(networkErrorMsg()); });
+    }
+
+    // 2) 设置新密码
+    document.getElementById("reset-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var errEl = document.getElementById("form-error");
+      errEl.hidden = true;
+      var pwd = document.getElementById("password").value;
+      var confirm = document.getElementById("confirm").value;
+      if (pwd.length < 6) { errEl.textContent = "密码至少需要 6 位"; errEl.hidden = false; return; }
+      if (pwd !== confirm) { errEl.textContent = "两次输入的密码不一致"; errEl.hidden = false; return; }
+
+      var btn = document.getElementById("submit-btn");
+      btn.disabled = true; btn.textContent = "提交中…";
+      fetch(SUPABASE_URL + "/auth/v1/user", {
+        method: "PUT",
+        headers: {
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": "Bearer " + accessToken,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ password: pwd }),
+      })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            if (!res.ok || (data && data.code)) {
+              errEl.textContent = /same|reused|recent/i.test((data.msg || data.message || ""))
+                ? "新密码不能与近期密码相同，请换一个"
+                : "设置失败，请回到心意管家 App 重新发起重置";
+              errEl.hidden = false;
+              btn.disabled = false; btn.textContent = "设置新密码";
+              return;
+            }
+            show("done");
+          });
+        })
+        .catch(function () {
+          errEl.textContent = networkErrorMsg();
+          errEl.hidden = false;
+          btn.disabled = false; btn.textContent = "设置新密码";
+        });
+    });
+  </script>
+</body>
+</html>
